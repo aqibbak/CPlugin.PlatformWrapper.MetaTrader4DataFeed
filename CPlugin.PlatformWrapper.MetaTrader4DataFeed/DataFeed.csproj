@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+  	<PackageProjectUrl>https://github.com/CPlugin/CPlugin.PlatformWrapper.MetaTrader4DataFeed</PackageProjectUrl>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DocumentationFile>bin\Release\CPlugin.PlatformWrapper.MetaTrader4DataFeed.xml</DocumentationFile>
+    <NoWarn>CS0649</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

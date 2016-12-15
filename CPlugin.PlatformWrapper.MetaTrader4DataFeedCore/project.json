@@ -1,5 +1,19 @@
 {
   "copyright": "CPlugin",
+  "packOptions": {
+    "summary": "MetaQuotes MetaTrader 4 DataFeed .NET Core wrapper",
+    "tags": [ "mt4", "metatrader", "datafeed", "wrapper", ".net" ],
+    "owners": [ "CPlugin" ],
+    "releaseNotes": "Public release",
+    "iconUrl": "https://github.com/CPlugin/CPlugin.PlatformWrapper.MetaTrader4DataFeed/favicon-32x32.png",
+    "projectUrl": "https://github.com/CPlugin/CPlugin.PlatformWrapper.MetaTrader4DataFeed",
+    "licenseUrl": "https://github.com/CPlugin/CPlugin.PlatformWrapper.MetaTrader4DataFeed/license",
+    "requireLicenseAcceptance": false,
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/CPlugin/CPlugin.PlatformWrapper.MetaTrader4DataFeed"
+    }
+  },
   "authors": [ "CPlugin" ],
   "description": "MetaQuotes MetaTrader 4 DataFeed .NET Core wrapper",
   "version": "999.999.99.99",

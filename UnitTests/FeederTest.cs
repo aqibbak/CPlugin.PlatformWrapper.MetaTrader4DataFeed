@@ -43,9 +43,6 @@ namespace UnitTests
 
     public static class Extensions
     {
-        public static void ToConsole(this string message)
-        {
-            Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
-        }
+        public static void ToConsole(this string message) => Console.WriteLine($"[{DateTime.Now:HH:mm:ss.fff}] {message}");
     }
 }
