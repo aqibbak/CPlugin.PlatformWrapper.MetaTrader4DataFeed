@@ -1,6 +1,6 @@
 {
-  "copyright": "CPlugin Ltd.",
-  "authors": [ "CPlugin Ltd." ],
+  "copyright": "CPlugin",
+  "authors": [ "CPlugin" ],
   "description": "MetaQuotes MetaTrader 4 DataFeed .NET Core wrapper",
   "version": "999.999.99.99",
   "dependencies": {

@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CPlugin.PlatformWrapper.MetaTrader4DataFeed")]
 [assembly: AssemblyDescription("MetaQuotes MetaTrader 4 DataFeed .NET wrapper")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("CPlugin Ltd.")]
+[assembly: AssemblyCompany("CPlugin")]
 [assembly: AssemblyProduct("CPlugin.PlatformWrapper.MetaTrader4DataFeed")]
-[assembly: AssemblyCopyright("Copyright © CPlugin Ltd. 2016")]
+[assembly: AssemblyCopyright("Copyright © CPlugin, 2016")]
 [assembly: AssemblyTrademark("CPlugin")]
 [assembly: AssemblyCulture("")]
 
