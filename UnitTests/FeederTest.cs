@@ -21,7 +21,8 @@ namespace UnitTests
                 Password = "RtxD4bo_",
                 ReconnectErrorsLimit = 1,
                 ReconnectTimeout = 1,
-                ReconnectRetryTimeout = 1
+                ReconnectRetryTimeout = 1,
+                ReadErrorsLimit = 1
             };
 
             "Init".ToConsole();

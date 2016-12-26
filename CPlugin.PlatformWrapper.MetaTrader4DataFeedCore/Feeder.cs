@@ -152,7 +152,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Idle timeout before reconnect, in sec.
         /// </summary>
         public int ReconnectRetryTimeout
         {
@@ -161,7 +161,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Sleep after several failed attempts, in sec.
         /// </summary>
         public int ReconnectTimeout
         {
@@ -170,7 +170,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Read errors for force reconnect
         /// </summary>
         public int ReadErrorsLimit
         {
@@ -179,7 +179,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// Number of sequential failed calls to make feed get entirely restarted
+        /// Reconnect errors before sleep
         /// </summary>
         public int ReconnectErrorsLimit
         {
@@ -781,33 +781,28 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                                  ($"[{_settings.Name}]: too many reading errors - auto reconnect has been scheduled.",
                                   null,
                                   null));
-                        try
-                        {
-                            //_closeCall(_feederInstance);
-                            Disconnect();
-                        }
-                        catch
-                        {
-                        }
-                        finally
-                        {
-                            _failedConnectAttempts = 0;
-                            _isConnected = false;
-                        }
+
+                        Disconnect();
+                        TimerTimeout = _settings.ReconnectTimeout * MillisecondsInSecond;
+                        _failedConnectAttempts = 0;
+                        _isConnected = false;
                     }
-                }
-                else if((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
-                {
-                    _statistics.Lock();
-                    _statistics.LastQuoteTime = DateTime.Now;
-                    _statistics.QuotesReceivedTotal += feedData.TicksCount;
-                    _statistics.Unlock();
 
-                    _failedConnectAttempts = 0;
-
-                    if((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
-                        ProceedQuotes(ref feedData);
+                    return;
                 }
+
+                if((feedData.TicksCount <= 0) || (feedData.TicksCount > 32))
+                    return;
+
+                _statistics.Lock();
+                _statistics.LastQuoteTime = DateTime.Now;
+                _statistics.QuotesReceivedTotal += feedData.TicksCount;
+                _statistics.Unlock();
+
+                _failedConnectAttempts = 0;
+
+                if((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
+                    ProceedQuotes(ref feedData);
             }
         }
 

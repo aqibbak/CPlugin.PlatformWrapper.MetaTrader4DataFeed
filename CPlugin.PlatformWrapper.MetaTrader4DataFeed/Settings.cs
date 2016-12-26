@@ -59,41 +59,41 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
 
         /// <summary>
-        /// 
+        /// Feeder name
         /// </summary>
         [Category("Common")]
         public string Name { get; set; } = "";
 
         /// <summary>
-        /// 
+        /// Feeder description
         /// </summary>
         [Category("Common")]
         [Description("Feeder description")]
         public string Description { get; set; } = "";
 
         /// <summary>
-        /// 
+        /// Path to *.feed DLL
         /// </summary>
         [Category("Connection")]
         [Description("Path to *.feed DLL")]
         public string Path { get; set; } = "";
 
         /// <summary>
-        /// 
+        /// Server
         /// </summary>
         [Description("Server")]
         [Category("Connection")]
         public string Server { get; set; } = "";
 
         /// <summary>
-        /// 
+        /// Login for connection
         /// </summary>
         [Category("Connection")]
         [Description("Login for connection")]
         public int Login { get; set; }
 
         /// <summary>
-        /// 
+        /// Password for connection
         /// </summary>
 #if NET451
         [PasswordPropertyText(true)]
@@ -103,7 +103,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         public string Password { get; set; } = "";
 
         /// <summary>
-        /// 
+        /// Idle timeout before reconnect, in sec.
         /// </summary>
         [DisplayName("Reconnect Idle Timeout")]
         [Description("Idle timeout before reconnect, in sec.")]
@@ -122,7 +122,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Sleep after several failed attempts, in sec.
         /// </summary>
         [RefreshProperties(RefreshProperties.All)]
         [Description("Sleep after several failed attempts, in sec.")]
@@ -141,7 +141,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Read errors for force reconnect
         /// </summary>
         [Description("Read errors for force reconnect")]
         [Category("Timeouts")]
@@ -160,7 +160,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Reconnect errors before sleep
         /// </summary>
         [Category("Timeouts")]
         [Description("Reconnect errors before sleep")]
