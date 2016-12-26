@@ -28,109 +28,190 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         ISymbolObserver,
         IDisposable
     {
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        //private const int StackSize = 65536;
+        /// <summary>
+        /// Handle paused event here
+        /// </summary>
+        public event EventHandler Paused
+        {
+            add { PausedEvent += value; }
+            remove
+            {
+                if (PausedEvent == null)
+                    return;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+                PausedEvent -= value;
+            }
+        }
+
+        /// <summary>
+        /// Handle started event here
+        /// </summary>
+        public event EventHandler Started
+        {
+            add { StartedEvent += value; }
+            remove
+            {
+                if (StartedEvent == null)
+                    return;
+
+                StartedEvent -= value;
+            }
+        }
+
+        /// <summary>
+        /// Handle stopped event here
+        /// </summary>
+        public event EventHandler Stopped
+        {
+            add { StoppedEvent += value; }
+            remove
+            {
+                if (StoppedEvent == null)
+                    return;
+
+                StoppedEvent -= value;
+            }
+        }
+
+        /// <summary>
+        /// When status changed you get this event
+        /// </summary>
+        public event EventHandler<StatusMessageEventArgs> ChangeStatus
+        {
+            add { StatusEvent += value; }
+            remove
+            {
+                if (StatusEvent == null)
+                    return;
+
+                StatusEvent -= value;
+            }
+        }
+
+        /// <summary>
+        /// Handle quote received event here
+        /// </summary>
+        public event EventHandler<ReceiveQuoteEventArgs> QuoteReceived
+        {
+            add { ReceivedQuoteEvent += value; }
+            remove
+            {
+                if (ReceivedQuoteEvent == null)
+                    return;
+
+                ReceivedQuoteEvent -= value;
+            }
+        }
+
+        private event EventHandler StartedEvent;
+
+
+        //
+        private event EventHandler StoppedEvent;
+
+
+        //
+        private event EventHandler PausedEvent;
+
+
+        //
+        private event EventHandler<StatusMessageEventArgs> StatusEvent;
+
+
+        //
+        private event EventHandler<ReceiveQuoteEventArgs> ReceivedQuoteEvent;
         readonly object _stateLock = new object();
 
         private bool _running;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private IntPtr _hglobal;
 
+        private int _failedConnectAttempts;
+        private bool _isConnected;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private const int MaxBuffSize = 65536;
+        private const int MillisecondsInSecond = 1000;
+
+
         private static readonly Type TypeOfRawQuote = typeof(FeedTick);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private static readonly int LengthOfRawQuote = Marshal.SizeOf<FeedTick>();
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private readonly List<string> _activeSymbols = new List<string>();
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private readonly AutoResetEvent _completeShutdownEvent = new AutoResetEvent(false);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private readonly ManualResetEvent _completionEvent = new ManualResetEvent(true);
 
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        //
+        //
         //private readonly AutoResetEvent _initCompletionEvent = new AutoResetEvent(false);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private readonly ManualResetEvent _initShutdownEvent = new ManualResetEvent(false);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private readonly FeederStatistics _statistics = new FeederStatistics();
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private CloseDelegate _closeCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private ConnectDelegate _connectCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private IntPtr _feederInstance = IntPtr.Zero;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private Timer _timer;
 
-        //[EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        private int _timerTimeout = 1;
+
+        /// <summary>
+        /// update timer settings
+        /// </summary>
+        private int TimerTimeout
+        {
+            get { return _timerTimeout; }
+            set
+            {
+                _timerTimeout = value;
+                _timer?.Change(value, -1);
+            }
+        }
+
+        //
+        //
         //private Thread _helperThread;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private DsCreate _nativeCreateCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private DsDestroy _nativeDestroyCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private IntPtr _nativeModule;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private DsVersion _nativeVersionCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private ReadDelegate _readCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private SetSymbolsDelegate _setSymbolsCall;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+
         private Settings _settings = new Settings();
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private RunningStatus _status = RunningStatus.Stopped;
 
-        static Feeder()
-        {
-            InitWinSock();
-        }
+        private RunningStatus _status = RunningStatus.Stopped;
 
         /// <summary>
         /// 
@@ -215,20 +296,6 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        public void Dispose()
-        {
-            try
-            {
-                Stop();
-            }
-            catch
-            {
-            }
-        }
-
-        /// <summary>
         /// Get Vendor name
         /// </summary>
         public string VendorInfo => "Quote Feed for MT4 Platform";
@@ -254,7 +321,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        /// 
+        /// Human readable feeder name. Used for journaling etc.
         /// </summary>
         public string Name
         {
@@ -287,17 +354,43 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         public RunningStatus Status => _status;
 
         /// <summary>
-        /// Handle quote received event here
+        ///     Active symbols. To enable/disable specific symbol call AdviseSymbol/UnadviseSymbol.
+        ///     By default - all symbols are active if non e were specified.
         /// </summary>
-        public event EventHandler<ReceiveQuoteEventArgs> QuoteReceived
-        {
-            add { ReceivedQuoteEvent += value; }
-            remove
-            {
-                if (ReceivedQuoteEvent == null)
-                    return;
+        public ReadOnlyCollection<string> ActiveSymbols => new ReadOnlyCollection<string>(_activeSymbols);
 
-                ReceivedQuoteEvent -= value;
+        static Feeder()
+        {
+            InitWinSock();
+        }
+
+        /// <summary>
+        /// Default constructor
+        /// </summary>
+        public Feeder()
+        {
+            _timer = new Timer
+                (state =>
+                {
+                    OnTick();
+                    _timer?.Change(TimerTimeout, -1);
+                },
+                 null,
+                 Timeout.Infinite,
+                 -1);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public void Dispose()
+        {
+            try
+            {
+                Stop();
+            }
+            catch
+            {
             }
         }
 
@@ -306,7 +399,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public void Pause()
         {
-            if (_status != RunningStatus.Running)
+            if(_status != RunningStatus.Running)
                 return;
 
             _completionEvent.WaitOne();
@@ -327,7 +420,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public void Resume()
         {
-            if (_status != RunningStatus.Paused)
+            if(_status != RunningStatus.Paused)
                 return;
 
             _completionEvent.WaitOne();
@@ -348,12 +441,12 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public void Start()
         {
-            if (_status != RunningStatus.Stopped)
+            if(_status != RunningStatus.Stopped)
                 return;
 
-            if (_settings.Path == "")
+            if(_settings.Path == "")
                 throw new Exception($"[{_settings.Name}]: 'Path' property not set");
-            if (_settings.Server == "")
+            if(_settings.Server == "")
                 throw new Exception($"[{_settings.Name}]: 'Server' property not set");
 
             _completionEvent.WaitOne();
@@ -364,7 +457,18 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                 _statistics.Reset();
                 _statistics.Unlock();
                 LoadNativeModule();
-                StartHelper();
+
+                if(_feederInstance == IntPtr.Zero)
+                {
+                    InitInstance();
+                    _failedConnectAttempts = 0;
+                    //flag = false;
+                }
+
+                lock(_stateLock)
+                {
+                    _timer.Change(0, -1);
+                }
                 _status = RunningStatus.Running;
                 StartedEvent?.Invoke(this, null);
             }
@@ -375,94 +479,282 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         }
 
         /// <summary>
-        ///     Stod feeder.
-        ///     Block current thread not more than 'ts' until feed beig fully stopped.
+        ///     Stop feeder and block current thread until it's getting fully stopped
         /// </summary>
+        /// <param name="ts">Maximum time to await</param>
         public void Stop(TimeSpan? ts = null)
         {
-            if (_status == RunningStatus.Stopped)
+            if(_status == RunningStatus.Stopped)
                 return;
+
+            _status = RunningStatus.Stopped;
+
 
             _completionEvent.WaitOne();
             try
             {
                 _completionEvent.Reset();
-                StopHelper(ts);
+
+                lock(_stateLock)
+                {
+                    //while(_running)
+                        //Monitor.Wait(_stateLock);
+
+                    _timer.Change(-1, -1);
+
+                    try
+                    {
+                        ReleaseInstance();
+                        if(_hglobal != IntPtr.Zero)
+                            Marshal.FreeHGlobal(_hglobal);
+                        _completeShutdownEvent.Set();
+
+                        _initShutdownEvent.Set();
+                        //if (_helperThread.IsAlive)
+                        //{
+                        //                    if (
+                        //                        !_helperThread.Join
+                        //                            (ts.HasValue
+                        //                                 ? (int) ts.Value.TotalMilliseconds
+                        //                                 : (int) TimeSpan.FromSeconds(3).TotalMilliseconds))
+                        //                    {
+                        //#if NET451
+                        //                        _helperThread.Abort();
+                        //#endif
+                        //                    }
+                        _completeShutdownEvent.WaitOne();
+                        //}
+                    }
+                    finally
+                    {
+                        _timer = null;
+                    }
+                }
+
                 UnloadNativeModule();
             }
             finally
             {
-                _status = RunningStatus.Stopped;
                 _completionEvent.Set();
                 StoppedEvent?.Invoke(this, null);
             }
         }
 
-        /// <summary>
-        /// Handle paused event here
-        /// </summary>
-        public event EventHandler Paused
+        private void InitInstance()
         {
-            add { PausedEvent += value; }
-            remove
+            _feederInstance = _nativeCreateCall();
+            if(_feederInstance == IntPtr.Zero)
+                throw new Exception($"[{_settings.Name}]: DsCreate failed.");
+
+            //var feedVersion = _nativeVersionCall();
+
+            var dst = IntPtr.Zero;
+            RtlMoveMemory(ref dst, _feederInstance, IntPtr.Size);
+            var cfeedInterfaceVtbl = Marshal.PtrToStructure<CFeedInterfaceVtbl>(dst);
+            _connectCall = Marshal.GetDelegateForFunctionPointer<ConnectDelegate>(cfeedInterfaceVtbl.Connect);
+            _closeCall = Marshal.GetDelegateForFunctionPointer<CloseDelegate>(cfeedInterfaceVtbl.Close);
+            _setSymbolsCall = Marshal.GetDelegateForFunctionPointer<SetSymbolsDelegate>
+                (cfeedInterfaceVtbl.SetSymbols);
+            _readCall = Marshal.GetDelegateForFunctionPointer<ReadDelegate>(cfeedInterfaceVtbl.Read);
+        }
+
+        private void ReleaseInstance()
+        {
+            try
             {
-                if (PausedEvent == null)
+                if(!(_feederInstance != IntPtr.Zero) || (_closeCall == null))
                     return;
 
-                PausedEvent -= value;
+                _closeCall(_feederInstance);
+                //_nativeDestroyCall(_feederInstance);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                _feederInstance = IntPtr.Zero;
             }
         }
 
-        /// <summary>
-        /// Handle started event here
-        /// </summary>
-        public event EventHandler Started
+        private bool Connect()
         {
-            add { StartedEvent += value; }
-            remove
+            try
             {
-                if (StartedEvent == null)
-                    return;
+                _statistics.Lock();
+                ++_statistics.TotalConnections;
+                _statistics.Unlock();
 
-                StartedEvent -= value;
+                if(_connectCall
+                        (_feederInstance,
+                         _settings.Server,
+                         _settings.Login.ToString(),
+                         _settings.Password) == 0)
+                    throw new Exception("No connection to MT4");
+
+                _failedConnectAttempts = 0;
+                TimerTimeout = 1;
+                StatusEvent?.Invoke
+                    (this,
+                     new StatusMessageEventArgs
+                         ($"[{_settings.Name}]: connected to {_settings.Server}",
+                          null,
+                          null));
+
+                return true;
+            }
+            catch
+            {
+                _statistics.Lock();
+                ++_statistics.ErrorsConnections;
+                _statistics.Unlock();
+                StatusEvent?.Invoke
+                    (this,
+                     new StatusMessageEventArgs
+                         ($"[{_settings.Name}]: connection failed to {_settings.Server}",
+                          null,
+                          null));
+                ++_failedConnectAttempts;
+                if(_failedConnectAttempts >= _settings.ReconnectErrorsLimit)
+                {
+                    ReleaseInstance();
+                    TimerTimeout = _settings.ReconnectTimeout * MillisecondsInSecond;
+                    _failedConnectAttempts = 0;
+                    return false;
+                }
+
+                TimerTimeout = _settings.ReconnectRetryTimeout * MillisecondsInSecond;
+            }
+
+            return false;
+        }
+
+        private void OnTick()
+        {
+            try
+            {
+                lock(_stateLock)
+                {
+                    //if(_running)
+                    //    Monitor.Wait(_stateLock);
+
+                    //_running = true;
+
+                    var hglobal = Marshal.AllocHGlobal(MaxBuffSize);
+
+                    if(_isConnected == false)
+                        if((_isConnected = Connect()) == false)
+                            return;
+
+                    var feedData = new FeedData
+                    {
+                        Body = hglobal,
+                        BodyMaxlen = MaxBuffSize
+                    };
+
+                    int readResult;
+                    try
+                    {
+                        readResult = _readCall(_feederInstance, ref feedData);
+                    }
+                    catch
+                    {
+                        readResult = 0;
+                    }
+
+                    if((readResult == 0) || (feedData.Result != 0) || (feedData.ResultString != ""))
+                    {
+                        _statistics.Lock();
+                        ++_statistics.ReceivedErrors;
+                        _statistics.Unlock();
+
+                        ++_failedConnectAttempts;
+
+                        if(_failedConnectAttempts > _settings.ReadErrorsLimit)
+                        {
+                            StatusEvent?.Invoke
+                                (this,
+                                 new StatusMessageEventArgs
+                                     ($"[{_settings.Name}]: too many reading errors - auto reconnect has been scheduled.",
+                                      null,
+                                      null));
+                            try
+                            {
+                                _closeCall(_feederInstance);
+                                ReleaseInstance();
+                            }
+                            catch
+                            {
+                            }
+                            finally
+                            {
+                                _failedConnectAttempts = 0;
+                                _isConnected = false;
+                            }
+                        }
+                    }
+                    else if((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
+                    {
+                        _statistics.Lock();
+                        _statistics.LastQuoteTime = DateTime.Now;
+                        _statistics.QuotesReceivedTotal += feedData.TicksCount;
+                        _statistics.Unlock();
+
+                        _failedConnectAttempts = 0;
+
+                        if((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
+                            ProcessingQuotes(ref feedData);
+                    }
+                }
+            }
+            finally
+            {
+                //lock(_stateLock)
+                //{
+                //    //_running = false;
+                //    //Monitor.PulseAll(_stateLock);
+                //}
             }
         }
 
-        /// <summary>
-        /// Handle stopped event here
-        /// </summary>
-        public event EventHandler Stopped
+        private void ProcessingQuotes(ref FeedData context)
         {
-            add { StoppedEvent += value; }
-            remove
+            var ptrTicks = IntPtr.Zero;
+            try
             {
-                if (StoppedEvent == null)
-                    return;
-
-                StoppedEvent -= value;
+                ptrTicks = Marshal.AllocHGlobal(context.Ticks.Length);
+                Marshal.Copy(context.Ticks, 0, ptrTicks, LengthOfRawQuote * context.TicksCount);
+                for(var i = 0; i < context.TicksCount; ++i)
+                {
+                    var feedTick = Marshal.PtrToStructure<FeedTick>
+                        (new IntPtr(i*LengthOfRawQuote + ptrTicks.ToInt32()));
+                    lock(_activeSymbols)
+                    {
+                        if((_activeSymbols == null) || !_activeSymbols.Any() ||
+                            _activeSymbols.Contains(feedTick.Symbol))
+                        {
+                            _statistics.Lock();
+                            ++_statistics.QuotesReceived;
+                            _statistics.Unlock();
+                            var quote = new Quote
+                                (_settings.Name, feedTick.Bank, feedTick.Symbol, feedTick.Bid, feedTick.Ask, 0);
+                            try
+                            {
+                                ReceivedQuoteEvent?.Invoke(this, new ReceiveQuoteEventArgs(quote));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if(ptrTicks != IntPtr.Zero)
+                    Marshal.FreeHGlobal(ptrTicks);
             }
         }
-
-        /// <summary>
-        /// When status changed you get this event
-        /// </summary>
-        public event EventHandler<StatusMessageEventArgs> ChangeStatus
-        {
-            add { StatusEvent += value; }
-            remove
-            {
-                if (StatusEvent == null)
-                    return;
-
-                StatusEvent -= value;
-            }
-        }
-
-        /// <summary>
-        ///     Active symbols. To enable/disable specific symbol call AdviseSymbol/UnadviseSymbol.
-        ///     By default - all symbols are active if non e were specified.
-        /// </summary>
-        public ReadOnlyCollection<string> ActiveSymbols => new ReadOnlyCollection<string>(_activeSymbols);
 
         //public void AdviseSymbol(string symbol, string[] fields)
         //{
@@ -475,9 +767,9 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// <param name="symbol"></param>
         public void AdviseSymbol(string symbol)
         {
-            lock (_activeSymbols)
+            lock(_activeSymbols)
             {
-                if (_activeSymbols.Contains(symbol))
+                if(_activeSymbols.Contains(symbol))
                     throw new Exception("Duplicate symbol: " + symbol);
 
                 _activeSymbols.Add(symbol);
@@ -490,70 +782,14 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// <param name="symbol"></param>
         public void UnadviseSymbol(string symbol)
         {
-            lock (_activeSymbols)
+            lock(_activeSymbols)
             {
-                if (!_activeSymbols.Contains(symbol))
+                if(!_activeSymbols.Contains(symbol))
                     return;
 
                 _activeSymbols.Remove(symbol);
             }
         }
-
-        [DllImport("WS2_32.DLL")]
-        private static extern int WSAStartup(int wVersionRequested, IntPtr lpWsaData);
-
-        [DllImport("WS2_32.DLL")]
-        private static extern int WSACleanup();
-
-        /// <summary>
-        ///     The WSAStartup function initiates use of WS2_32.DLL by a process.
-        /// </summary>
-        /// <returns>The WSAStartup function returns zero if successful.</returns>
-        private static int InitWinSock()
-        {
-            try
-            {
-                var pData = Marshal.AllocHGlobal(Marshal.SizeOf<WsaData>());
-                var err = WSAStartup(0x0202, pData);
-                //WSAData wsaData = (WSAData)Marshal.PtrToStructure(pData, typeof(WSAData));
-                Marshal.FreeHGlobal(pData);
-                return err;
-            }
-            catch (Exception)
-            {
-                return -1;
-            }
-        }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private event EventHandler StartedEvent;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private event EventHandler StoppedEvent;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private event EventHandler PausedEvent;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private event EventHandler<StatusMessageEventArgs> StatusEvent;
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        //[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private event EventHandler<ReceiveQuoteEventArgs> ReceivedQuoteEvent;
-
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DllImport("kernel32.dll")]
-        private static extern void RtlMoveMemory(ref IntPtr dst, IntPtr src, int size);
-
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DllImport("kernel32.dll")]
-        private static extern IntPtr GetProcAddress(IntPtr module, string procName);
 
         /// <summary>
         /// 
@@ -563,43 +799,40 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         public ConfigurationResult ApplySettings(Settings settings)
         {
             var configurationResult = ConfigurationResult.NotChanged;
-            //if(settings is Mt4FeederSettings)
-            //{
-            //var mt4FeederSettings = (Mt4FeederSettings) settings;
-            if (settings.Path != _settings.Path)
+            if(settings.Path != _settings.Path)
                 configurationResult = _status == RunningStatus.Stopped
                                           ? ConfigurationResult.SuccessfulApplied
                                           : ConfigurationResult.NeedReactivation;
-            if ((settings.Name != _settings.Name) && (configurationResult == ConfigurationResult.NotChanged))
+            if((settings.Name != _settings.Name) && (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if (settings.Server != _settings.Server)
+            if(settings.Server != _settings.Server)
                 configurationResult = _status == RunningStatus.Stopped
                                           ? ConfigurationResult.SuccessfulApplied
                                           : ConfigurationResult.NeedReactivation;
-            if (settings.Login != _settings.Login)
+            if(settings.Login != _settings.Login)
                 configurationResult = _status == RunningStatus.Stopped
                                           ? ConfigurationResult.SuccessfulApplied
                                           : ConfigurationResult.NeedReactivation;
-            if (settings.Password != _settings.Password)
+            if(settings.Password != _settings.Password)
                 configurationResult = _status == RunningStatus.Stopped
                                           ? ConfigurationResult.SuccessfulApplied
                                           : ConfigurationResult.NeedReactivation;
-            if ((settings.Description != _settings.Description) &&
+            if((settings.Description != _settings.Description) &&
                 (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if ((settings.ReadErrorsLimit != _settings.ReadErrorsLimit) &&
+            if((settings.ReadErrorsLimit != _settings.ReadErrorsLimit) &&
                 (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if ((settings.ReconnectErrorsLimit != _settings.ReconnectErrorsLimit) &&
+            if((settings.ReconnectErrorsLimit != _settings.ReconnectErrorsLimit) &&
                 (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if ((settings.ReconnectRetryTimeout != _settings.ReconnectRetryTimeout) &&
+            if((settings.ReconnectRetryTimeout != _settings.ReconnectRetryTimeout) &&
                 (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if ((settings.ReconnectTimeout != _settings.ReconnectTimeout) &&
+            if((settings.ReconnectTimeout != _settings.ReconnectTimeout) &&
                 (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
-            if (configurationResult != ConfigurationResult.NotChanged)
+            if(configurationResult != ConfigurationResult.NotChanged)
                 _settings = settings;
             //}
             return configurationResult;
@@ -616,24 +849,21 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr LoadLibrary(string path);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
+
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool FreeLibrary(IntPtr module);
 
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
         private void LoadNativeModule()
         {
             _nativeModule = LoadLibrary(_settings.Path);
-            if (_nativeModule == null)
-            {
+            if(_nativeModule == null)
                 throw new Exception($"[{_settings.Name}]: no load '{_settings.Path}'");
-            }
 
             var procAddress1 = GetProcAddress(_nativeModule, "DsCreate");
             var procAddress2 = GetProcAddress(_nativeModule, "DsDestroy");
             var procAddress3 = GetProcAddress(_nativeModule, "DsVersion");
-            if ((procAddress1 == IntPtr.Zero) || (procAddress2 == IntPtr.Zero) ||
+            if((procAddress1 == IntPtr.Zero) || (procAddress2 == IntPtr.Zero) ||
                 (procAddress3 == IntPtr.Zero))
             {
                 FreeLibrary(_nativeModule);
@@ -643,470 +873,76 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
             }
 
             _nativeCreateCall =
-                (DsCreate) Marshal.GetDelegateForFunctionPointer<DsCreate>(procAddress1);
+                Marshal.GetDelegateForFunctionPointer<DsCreate>(procAddress1);
             _nativeDestroyCall =
-                (DsDestroy) Marshal.GetDelegateForFunctionPointer<DsDestroy>(procAddress1);
+                Marshal.GetDelegateForFunctionPointer<DsDestroy>(procAddress1);
             _nativeVersionCall =
-                (DsVersion) Marshal.GetDelegateForFunctionPointer<DsVersion>(procAddress3);
+                Marshal.GetDelegateForFunctionPointer<DsVersion>(procAddress3);
         }
 
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
         private void UnloadNativeModule()
         {
-            if (_nativeModule == null)
+            if(_nativeModule == null)
                 return;
 
             FreeLibrary(_nativeModule);
             _nativeModule = IntPtr.Zero;
         }
 
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void StartHelper()
-        {
-            lock (_stateLock)
-            {
-                _timer = new Timer(OnTick, null, Timeout.Infinite, 1);
-                //_helperThread = new Thread(HelperCallback /*, 65536*/);
-                //_helperThread.IsBackground = true;
-                //_helperThread.Name = "[feeder]: " + _settings.Name;
-                //_initCompletionEvent.Reset();
-                //_helperThread.Start();
-                //_initCompletionEvent.WaitOne();
-            }
-        }
-
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void StopHelper(TimeSpan? ts = null)
-        {
-            lock (_stateLock)
-            {
-                while (_running)
-                    Monitor.Wait(_stateLock);
-
-                _timer?.Dispose();
-
-                try
-                {
-                    ReleaseInstance();
-                    if (_hglobal != IntPtr.Zero)
-                        Marshal.FreeHGlobal(_hglobal);
-                    _completeShutdownEvent.Set();
-
-                    _initShutdownEvent.Set();
-                    //if (_helperThread.IsAlive)
-                    //{
-                    //                    if (
-                    //                        !_helperThread.Join
-                    //                            (ts.HasValue
-                    //                                 ? (int) ts.Value.TotalMilliseconds
-                    //                                 : (int) TimeSpan.FromSeconds(3).TotalMilliseconds))
-                    //                    {
-                    //#if NET451
-                    //                        _helperThread.Abort();
-                    //#endif
-                    //                    }
-                    _completeShutdownEvent.WaitOne();
-                    //}
-                }
-                finally
-                {
-                    _timer = null;
-                }
-            }
-        }
-
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void InitInstance()
-        {
-            _feederInstance = _nativeCreateCall();
-            if (_feederInstance == IntPtr.Zero)
-                throw new Exception($"[{_settings.Name}]: DsCreate failed.");
-
-            var dst = IntPtr.Zero;
-            RtlMoveMemory(ref dst, _feederInstance, IntPtr.Size);
-            var cfeedInterfaceVtbl = Marshal.PtrToStructure<CFeedInterfaceVtbl>(dst);
-            _connectCall = Marshal.GetDelegateForFunctionPointer<ConnectDelegate>(cfeedInterfaceVtbl.Connect);
-            _closeCall = Marshal.GetDelegateForFunctionPointer<CloseDelegate>(cfeedInterfaceVtbl.Close);
-            _setSymbolsCall = Marshal.GetDelegateForFunctionPointer<SetSymbolsDelegate>
-                (cfeedInterfaceVtbl.SetSymbols);
-            _readCall = Marshal.GetDelegateForFunctionPointer<ReadDelegate>(cfeedInterfaceVtbl.Read);
-        }
-
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void ReleaseInstance()
+        /// <summary>
+        ///     The WSAStartup function initiates use of WS2_32.DLL by a process.
+        /// </summary>
+        /// <returns>The WSAStartup function returns zero if successful.</returns>
+        private static int InitWinSock()
         {
             try
             {
-                if (!(_feederInstance != IntPtr.Zero) || (_closeCall == null))
-                    return;
-
-                _closeCall(_feederInstance);
-                _nativeDestroyCall(_feederInstance);
+                var pData = Marshal.AllocHGlobal(Marshal.SizeOf<WsaData>());
+                var err = WSAStartup(0x0202, pData);
+                //WSAData wsaData = (WSAData)Marshal.PtrToStructure(pData, typeof(WSAData));
+                Marshal.FreeHGlobal(pData);
+                return err;
             }
-            catch
+            catch(Exception)
             {
-            }
-            finally
-            {
-                _feederInstance = IntPtr.Zero;
+                return -1;
             }
         }
 
+        [DllImport("WS2_32.DLL")]
+        private static extern int WSAStartup(int wVersionRequested, IntPtr lpWsaData);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void _HelperCallback(object context)
-        {
-            var num1 = 0;
-            var flag = false;
-            var num2 = IntPtr.Zero;
-            var millisecondsTimeout = 1;
-            //_initCompletionEvent.Set();
-            _initShutdownEvent.Reset();
-            _completeShutdownEvent.Reset();
-            StatusEvent?.Invoke
-                (this, new StatusMessageEventArgs($"[{_settings.Name}]: helper thread started.", null, null));
-            _hglobal = Marshal.AllocHGlobal(65536);
-            try
-            {
-                while (!_initShutdownEvent.WaitOne(millisecondsTimeout /*, true*/))
-                {
-                    if (_feederInstance == IntPtr.Zero)
-                    {
-                        InitInstance();
-                        num1 = 0;
-                        flag = false;
-                    }
-                    if (!flag)
-                        try
-                        {
-                            _statistics.Lock();
-                            ++_statistics.TotalConnections;
-                            _statistics.Unlock();
-                            if (
-                                _connectCall
-                                    (_feederInstance,
-                                     _settings.Server,
-                                     _settings.Login.ToString(),
-                                     _settings.Password) == 0)
-                                throw new Exception("No connection to MT4");
+        [DllImport("WS2_32.DLL")]
+        private static extern int WSACleanup();
 
-                            num1 = 0;
-                            flag = true;
-                            millisecondsTimeout = 1;
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      $"[{_settings.Name}]: connected to {_settings.Server}",
-                                      null,
-                                      null));
-                        }
-                        catch
-                        {
-                            _statistics.Lock();
-                            ++_statistics.ErrorsConnections;
-                            _statistics.Unlock();
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      $"[{_settings.Name}]: connection failed to {_settings.Server}",
-                                      null,
-                                      null));
-                            ++num1;
-                            if (num1 >= _settings.ReconnectErrorsLimit)
-                            {
-                                ReleaseInstance();
-                                millisecondsTimeout = _settings.ReconnectTimeout*1000;
-                                num1 = 0;
-                                continue;
-                            }
 
-                            millisecondsTimeout = _settings.ReconnectRetryTimeout*1000;
-                            continue;
-                        }
+        //
 
-                    var feedData = new FeedData
-                    {
-                        Body = _hglobal,
-                        BodyMaxlen = 65536
-                    };
-                    int num3;
-                    try
-                    {
-                        num3 = _readCall(_feederInstance, ref feedData);
-                    }
-                    catch
-                    {
-                        num3 = 0;
-                    }
-                    if ((num3 == 0) || (feedData.Result != 0) || (feedData.ResultString != ""))
-                    {
-                        _statistics.Lock();
-                        ++_statistics.ReceivedErrors;
-                        _statistics.Unlock();
-                        ++num1;
-                        //if (Thread.CurrentThread.Priority != ThreadPriority.Normal)
-                        //    Thread.CurrentThread.Priority = ThreadPriority.Normal;
-                        if (num1 > _settings.ReadErrorsLimit)
-                        {
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      string.Format
-                                          ("[{0}]: too many reading errors - auto reconnect has been scheduled.",
-                                           _settings.Name,
-                                           _settings.Server),
-                                      null,
-                                      null));
-                            try
-                            {
-                                _closeCall(_feederInstance);
-                                ReleaseInstance();
-                            }
-                            catch
-                            {
-                            }
-                            finally
-                            {
-                                num1 = 0;
-                                flag = false;
-                            }
-                        }
-                    }
-                    else if ((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
-                    {
-                        _statistics.Lock();
-                        _statistics.LastQuoteTime = DateTime.Now;
-                        _statistics.QuotesReceivedTotal += feedData.TicksCount;
-                        _statistics.Unlock();
-                        num1 = 0;
-                        //if (Thread.CurrentThread.Priority != ThreadPriority.AboveNormal)
-                        //    Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
-                        if ((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
-                            ProcessingQuotes(ref feedData);
-                    }
-                }
-            }
-            //catch (ThreadAbortException ex)
-            //{
-            //}
-            catch (Exception ex)
-            {
-                if (StatusEvent == null)
-                    return;
 
-                StatusEvent
-                    (this,
-                     new StatusMessageEventArgs
-                         ($"[{_settings.Name}]: feeder error. See inner exception.", ex, null));
-            }
-            finally
-            {
-                ReleaseInstance();
-                if (_hglobal != IntPtr.Zero)
-                    Marshal.FreeHGlobal(_hglobal);
-                StatusEvent?.Invoke
-                    (this,
-                     new StatusMessageEventArgs($"[{_settings.Name}]: helper thread stopped.", null, null));
-                _completeShutdownEvent.Set();
-            }
-        }
+        [DllImport("kernel32.dll")]
+        private static extern void RtlMoveMemory(ref IntPtr dst, IntPtr src, int size);
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void OnTick(object o)
-        {
-            try
-            {
-                lock (_stateLock)
-                {
-                    if (_running)
-                        Monitor.Wait(_stateLock);
 
-                    _running = true;
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr GetProcAddress(IntPtr module, string procName);
 
-                    var num1 = 0;
-                    var flag = false;
-                    var num2 = IntPtr.Zero;
-                    var millisecondsTimeout = 1;
-                    var hglobal = Marshal.AllocHGlobal(65536);
 
-                    //while (!_initShutdownEvent.WaitOne(millisecondsTimeout/*, true*/))
-                    //{
-                    if (_feederInstance == IntPtr.Zero)
-                    {
-                        InitInstance();
-                        num1 = 0;
-                        flag = false;
-                    }
-                    if (!flag)
-                        try
-                        {
-                            _statistics.Lock();
-                            ++_statistics.TotalConnections;
-                            _statistics.Unlock();
-                            if (
-                                _connectCall
-                                    (_feederInstance,
-                                     _settings.Server,
-                                     _settings.Login.ToString(),
-                                     _settings.Password) == 0)
-                                throw new Exception("No connection to MT4");
+        //
+        //private void StartHelper()
+        //{
+        //    lock(_stateLock)
+        //    {
+        //        _timer = new Timer(OnTick, null, Timeout.Infinite, 1);
+        //        //_helperThread = new Thread(HelperCallback /*, 65536*/);
+        //        //_helperThread.IsBackground = true;
+        //        //_helperThread.Name = "[feeder]: " + _settings.Name;
+        //        //_initCompletionEvent.Reset();
+        //        //_helperThread.Start();
+        //        //_initCompletionEvent.WaitOne();
+        //    }
+        //}
 
-                            num1 = 0;
-                            flag = true;
-                            millisecondsTimeout = 1;
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      $"[{_settings.Name}]: connected to {_settings.Server}",
-                                      null,
-                                      null));
-                        }
-                        catch
-                        {
-                            _statistics.Lock();
-                            ++_statistics.ErrorsConnections;
-                            _statistics.Unlock();
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      $"[{_settings.Name}]: connection failed to {_settings.Server}",
-                                      null,
-                                      null));
-                            ++num1;
-                            if (num1 >= _settings.ReconnectErrorsLimit)
-                            {
-                                ReleaseInstance();
-                                millisecondsTimeout = _settings.ReconnectTimeout*1000;
-                                num1 = 0;
-                                return;
-                            }
-
-                            millisecondsTimeout = _settings.ReconnectRetryTimeout*1000;
-                            return;
-                        }
-
-                    var feedData = new FeedData
-                    {
-                        Body = hglobal,
-                        BodyMaxlen = 65536
-                    };
-                    int num3;
-                    try
-                    {
-                        num3 = _readCall(_feederInstance, ref feedData);
-                    }
-                    catch
-                    {
-                        num3 = 0;
-                    }
-                    if ((num3 == 0) || (feedData.Result != 0) || (feedData.ResultString != ""))
-                    {
-                        _statistics.Lock();
-                        ++_statistics.ReceivedErrors;
-                        _statistics.Unlock();
-                        ++num1;
-                        //if (Thread.CurrentThread.Priority != ThreadPriority.Normal)
-                        //    Thread.CurrentThread.Priority = ThreadPriority.Normal;
-                        if (num1 > _settings.ReadErrorsLimit)
-                        {
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     (
-                                      string.Format
-                                          ("[{0}]: too many reading errors - auto reconnect has been scheduled.",
-                                           _settings.Name,
-                                           _settings.Server),
-                                      null,
-                                      null));
-                            try
-                            {
-                                _closeCall(_feederInstance);
-                                ReleaseInstance();
-                            }
-                            catch
-                            {
-                            }
-                            finally
-                            {
-                                num1 = 0;
-                                flag = false;
-                            }
-                        }
-                    }
-                    else if ((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
-                    {
-                        _statistics.Lock();
-                        _statistics.LastQuoteTime = DateTime.Now;
-                        _statistics.QuotesReceivedTotal += feedData.TicksCount;
-                        _statistics.Unlock();
-                        num1 = 0;
-                        //if (Thread.CurrentThread.Priority != ThreadPriority.AboveNormal)
-                        //    Thread.CurrentThread.Priority = ThreadPriority.AboveNormal;
-                        if ((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
-                            ProcessingQuotes(ref feedData);
-                    }
-                }
-            }
-            finally
-            {
-                lock (_stateLock)
-                {
-                    _running = false;
-                    Monitor.PulseAll(_stateLock);
-                }
-            }
-        }
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        private void ProcessingQuotes(ref FeedData context)
-        {
-            var num1 = IntPtr.Zero;
-            try
-            {
-                num1 = Marshal.AllocHGlobal(context.Ticks.Length);
-                Marshal.Copy(context.Ticks, 0, num1, LengthOfRawQuote*context.TicksCount);
-                var num2 = 0;
-                for (; num2 < context.TicksCount; ++num2)
-                {
-                    var feedTick = Marshal.PtrToStructure<FeedTick>(new IntPtr(num2*LengthOfRawQuote + num1.ToInt32()));
-                    lock (_activeSymbols)
-                    {
-                        if ((_activeSymbols == null) || !_activeSymbols.Any() ||
-                            _activeSymbols.Contains(feedTick.Symbol))
-                        {
-                            _statistics.Lock();
-                            ++_statistics.QuotesReceived;
-                            _statistics.Unlock();
-                            var local4 = new Quote
-                                (_settings.Name, feedTick.Bank, feedTick.Symbol, feedTick.Bid, feedTick.Ask, 0);
-                            try
-                            {
-                                ReceivedQuoteEvent(this, new ReceiveQuoteEventArgs(local4));
-                            }
-                            catch
-                            {
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                if (num1 != IntPtr.Zero)
-                    Marshal.FreeHGlobal(num1);
-            }
-        }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
         private struct WsaData

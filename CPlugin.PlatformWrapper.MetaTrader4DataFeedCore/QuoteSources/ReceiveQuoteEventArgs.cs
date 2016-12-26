@@ -9,8 +9,8 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed.QuoteSources
     /// </summary>
     public class ReceiveQuoteEventArgs : EventArgs
     {
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private readonly Quote _quote;
 
         /// <summary>

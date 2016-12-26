@@ -9,16 +9,16 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed.Common
     /// </summary>
     public class StatusMessageEventArgs : EventArgs
     {
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private readonly object _context;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private readonly Exception _exception;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private readonly string _status;
 
         /// <summary>

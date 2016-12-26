@@ -27,7 +27,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
 
 #if NET451
-        [EditorBrowsable(EditorBrowsableState.Never)]
+        
         protected
             override
             bool ReleaseHandle()
@@ -37,7 +37,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 #endif
 
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
+        
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool FreeLibrary(IntPtr module);
     }

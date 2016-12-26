@@ -31,44 +31,44 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public const int RECONNECT_RETRY_TIMEOUT = 2;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private string _description = "";
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private int _login;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private string _name = "";
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private string _password = "";
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private string _path = "";
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private int _readErrorsLimit = 20;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private int _reconnectErrorsLimit = 5;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private int _reconnectRetryTimeout = 2;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private int _reconnectTimeout = 60;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private string _server = "";
 
         /// <summary>

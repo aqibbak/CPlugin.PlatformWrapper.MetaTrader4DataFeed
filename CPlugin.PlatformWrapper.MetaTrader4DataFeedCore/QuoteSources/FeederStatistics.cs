@@ -10,36 +10,36 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed.QuoteSources
     /// </summary>
     public class FeederStatistics
     {
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private readonly object _lockObject = new object();
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _errorsConnections;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _helperRestarts;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private DateTime _lastQuoteTime;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _quotesReceived;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _quotesReceivedTotal;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _receivedErrors;
 
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        
+        
         private long _totalConnections;
 
         /// <summary>
