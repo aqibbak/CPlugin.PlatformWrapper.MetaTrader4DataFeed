@@ -28,6 +28,8 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         ISymbolObserver,
         IDisposable
     {
+        #region public fields
+
         /// <summary>
         /// Handle paused event here
         /// </summary>
@@ -103,6 +105,156 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool CanResetSettings => false;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public object Settings => _settings;
+
+        /// <summary>
+        ///     Full path to 'mt4feeder.feed' file including its name
+        /// </summary>
+        public string Path
+        {
+            get { return _settings.Path; }
+            set { _settings.Path = value; }
+        }
+
+        /// <summary>
+        ///     MT4 server address
+        /// </summary>
+        public string Server
+        {
+            get { return _settings.Server; }
+            set { _settings.Server = value; }
+        }
+
+        /// <summary>
+        ///     Client account
+        /// </summary>
+        public int Login
+        {
+            get { return _settings.Login; }
+            set { _settings.Login = value; }
+        }
+
+        /// <summary>
+        ///     Client password
+        /// </summary>
+        public string Password
+        {
+            get { return _settings.Password; }
+            set { _settings.Password = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ReconnectRetryTimeout
+        {
+            get { return _settings.ReconnectRetryTimeout; }
+            set { _settings.ReconnectRetryTimeout = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ReconnectTimeout
+        {
+            get { return _settings.ReconnectTimeout; }
+            set { _settings.ReconnectTimeout = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public int ReadErrorsLimit
+        {
+            get { return _settings.ReadErrorsLimit; }
+            set { _settings.ReadErrorsLimit = value; }
+        }
+
+        /// <summary>
+        /// Number of sequential failed calls to make feed get entirely restarted
+        /// </summary>
+        public int ReconnectErrorsLimit
+        {
+            get { return _settings.ReconnectErrorsLimit; }
+            set { _settings.ReconnectErrorsLimit = value; }
+        }
+
+        /// <summary>
+        /// Get Vendor name
+        /// </summary>
+        public string VendorInfo => "Quote Feed for MT4 Platform";
+
+        //public Version Version => GetType().Assembly.GetName().Version;
+        /// <summary>
+        /// Get current assembly version
+        /// </summary>
+        public Version Version => typeof(Feeder).GetTypeInfo().Assembly.GetName().Version;
+
+        /// <summary>
+        /// Get statistics
+        /// </summary>
+        public FeederStatistics Statistics
+        {
+            get
+            {
+                _statistics.Lock();
+                var feederStatistics = _statistics;
+                _statistics.Unlock();
+                return feederStatistics;
+            }
+        }
+
+        /// <summary>
+        /// Human readable feeder name. Used for journaling etc.
+        /// </summary>
+        public string Name
+        {
+            get { return _settings.Name; }
+            set { _settings.Name = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Description
+        {
+            get { return _settings.Description; }
+            set { _settings.Description = value; }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool CanPaused => _status == RunningStatus.Running;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool CanResumed => _status == RunningStatus.Paused;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public RunningStatus Status => _status;
+
+        /// <summary>
+        ///     Active symbols. To enable/disable specific symbol call AdviseSymbol/UnadviseSymbol.
+        ///     By default - all symbols are active if non e were specified.
+        /// </summary>
+        public ReadOnlyCollection<string> ActiveSymbols => new ReadOnlyCollection<string>(_activeSymbols);
+
+        #endregion
+
+        #region private fields
+
         private event EventHandler StartedEvent;
 
 
@@ -120,7 +272,9 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
         //
         private event EventHandler<ReceiveQuoteEventArgs> ReceivedQuoteEvent;
-        readonly object _stateLock = new object();
+
+
+        private readonly object _stateLock = new object();
 
         private bool _running;
 
@@ -213,151 +367,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
         private RunningStatus _status = RunningStatus.Stopped;
 
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool CanResetSettings => false;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public object Settings => _settings;
-
-        /// <summary>
-        ///     Full path to 'mt4feeder.feed' file including its name
-        /// </summary>
-        public string Path
-        {
-            get { return _settings.Path; }
-            set { _settings.Path = value; }
-        }
-
-        /// <summary>
-        ///     MT4 server address
-        /// </summary>
-        public string Server
-        {
-            get { return _settings.Server; }
-            set { _settings.Server = value; }
-        }
-
-        /// <summary>
-        ///     Client account
-        /// </summary>
-        public int Login
-        {
-            get { return _settings.Login; }
-            set { _settings.Login = value; }
-        }
-
-        /// <summary>
-        ///     Client password
-        /// </summary>
-        public string Password
-        {
-            get { return _settings.Password; }
-            set { _settings.Password = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ReconnectRetryTimeout
-        {
-            get { return _settings.ReconnectRetryTimeout; }
-            set { _settings.ReconnectRetryTimeout = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ReconnectTimeout
-        {
-            get { return _settings.ReconnectTimeout; }
-            set { _settings.ReconnectTimeout = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ReadErrorsLimit
-        {
-            get { return _settings.ReadErrorsLimit; }
-            set { _settings.ReadErrorsLimit = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public int ReconnectErrorsLimit
-        {
-            get { return _settings.ReconnectErrorsLimit; }
-            set { _settings.ReconnectErrorsLimit = value; }
-        }
-
-        /// <summary>
-        /// Get Vendor name
-        /// </summary>
-        public string VendorInfo => "Quote Feed for MT4 Platform";
-
-        //public Version Version => GetType().Assembly.GetName().Version;
-        /// <summary>
-        /// Get current assembly version
-        /// </summary>
-        public Version Version => typeof(Feeder).GetTypeInfo().Assembly.GetName().Version;
-
-        /// <summary>
-        /// Get statistics
-        /// </summary>
-        public FeederStatistics Statistics
-        {
-            get
-            {
-                _statistics.Lock();
-                var feederStatistics = _statistics;
-                _statistics.Unlock();
-                return feederStatistics;
-            }
-        }
-
-        /// <summary>
-        /// Human readable feeder name. Used for journaling etc.
-        /// </summary>
-        public string Name
-        {
-            get { return _settings.Name; }
-            set { _settings.Name = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string Description
-        {
-            get { return _settings.Description; }
-            set { _settings.Description = value; }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool CanPaused => _status == RunningStatus.Running;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public bool CanResumed => _status == RunningStatus.Paused;
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public RunningStatus Status => _status;
-
-        /// <summary>
-        ///     Active symbols. To enable/disable specific symbol call AdviseSymbol/UnadviseSymbol.
-        ///     By default - all symbols are active if non e were specified.
-        /// </summary>
-        public ReadOnlyCollection<string> ActiveSymbols => new ReadOnlyCollection<string>(_activeSymbols);
+        #endregion
 
         static Feeder()
         {
@@ -372,12 +382,18 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
             _timer = new Timer
                 (state =>
                 {
-                    OnTick();
-                    _timer?.Change(TimerTimeout, -1);
+                    try
+                    {
+                        OnTick();
+                    }
+                    catch
+                    {
+                    }
+                    _timer?.Change(TimerTimeout, Timeout.Infinite);
                 },
                  null,
                  Timeout.Infinite,
-                 -1);
+                 Timeout.Infinite);
         }
 
         /// <summary>
@@ -467,7 +483,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
                 lock(_stateLock)
                 {
-                    _timer.Change(0, -1);
+                    _timer.Change(0, Timeout.Infinite);
                 }
                 _status = RunningStatus.Running;
                 StartedEvent?.Invoke(this, null);
@@ -498,13 +514,13 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                 lock(_stateLock)
                 {
                     //while(_running)
-                        //Monitor.Wait(_stateLock);
+                    //Monitor.Wait(_stateLock);
 
                     _timer.Change(-1, -1);
 
                     try
                     {
-                        ReleaseInstance();
+                        Disconnect();
                         if(_hglobal != IntPtr.Zero)
                             Marshal.FreeHGlobal(_hglobal);
                         _completeShutdownEvent.Set();
@@ -539,227 +555,6 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                 StoppedEvent?.Invoke(this, null);
             }
         }
-
-        private void InitInstance()
-        {
-            _feederInstance = _nativeCreateCall();
-            if(_feederInstance == IntPtr.Zero)
-                throw new Exception($"[{_settings.Name}]: DsCreate failed.");
-
-            //var feedVersion = _nativeVersionCall();
-
-            var dst = IntPtr.Zero;
-            RtlMoveMemory(ref dst, _feederInstance, IntPtr.Size);
-            var cfeedInterfaceVtbl = Marshal.PtrToStructure<CFeedInterfaceVtbl>(dst);
-            _connectCall = Marshal.GetDelegateForFunctionPointer<ConnectDelegate>(cfeedInterfaceVtbl.Connect);
-            _closeCall = Marshal.GetDelegateForFunctionPointer<CloseDelegate>(cfeedInterfaceVtbl.Close);
-            _setSymbolsCall = Marshal.GetDelegateForFunctionPointer<SetSymbolsDelegate>
-                (cfeedInterfaceVtbl.SetSymbols);
-            _readCall = Marshal.GetDelegateForFunctionPointer<ReadDelegate>(cfeedInterfaceVtbl.Read);
-        }
-
-        private void ReleaseInstance()
-        {
-            try
-            {
-                if(!(_feederInstance != IntPtr.Zero) || (_closeCall == null))
-                    return;
-
-                _closeCall(_feederInstance);
-                //_nativeDestroyCall(_feederInstance);
-            }
-            catch
-            {
-            }
-            finally
-            {
-                _feederInstance = IntPtr.Zero;
-            }
-        }
-
-        private bool Connect()
-        {
-            try
-            {
-                _statistics.Lock();
-                ++_statistics.TotalConnections;
-                _statistics.Unlock();
-
-                if(_connectCall
-                        (_feederInstance,
-                         _settings.Server,
-                         _settings.Login.ToString(),
-                         _settings.Password) == 0)
-                    throw new Exception("No connection to MT4");
-
-                _failedConnectAttempts = 0;
-                TimerTimeout = 1;
-                StatusEvent?.Invoke
-                    (this,
-                     new StatusMessageEventArgs
-                         ($"[{_settings.Name}]: connected to {_settings.Server}",
-                          null,
-                          null));
-
-                return true;
-            }
-            catch
-            {
-                _statistics.Lock();
-                ++_statistics.ErrorsConnections;
-                _statistics.Unlock();
-                StatusEvent?.Invoke
-                    (this,
-                     new StatusMessageEventArgs
-                         ($"[{_settings.Name}]: connection failed to {_settings.Server}",
-                          null,
-                          null));
-                ++_failedConnectAttempts;
-                if(_failedConnectAttempts >= _settings.ReconnectErrorsLimit)
-                {
-                    ReleaseInstance();
-                    TimerTimeout = _settings.ReconnectTimeout * MillisecondsInSecond;
-                    _failedConnectAttempts = 0;
-                    return false;
-                }
-
-                TimerTimeout = _settings.ReconnectRetryTimeout * MillisecondsInSecond;
-            }
-
-            return false;
-        }
-
-        private void OnTick()
-        {
-            try
-            {
-                lock(_stateLock)
-                {
-                    //if(_running)
-                    //    Monitor.Wait(_stateLock);
-
-                    //_running = true;
-
-                    var hglobal = Marshal.AllocHGlobal(MaxBuffSize);
-
-                    if(_isConnected == false)
-                        if((_isConnected = Connect()) == false)
-                            return;
-
-                    var feedData = new FeedData
-                    {
-                        Body = hglobal,
-                        BodyMaxlen = MaxBuffSize
-                    };
-
-                    int readResult;
-                    try
-                    {
-                        readResult = _readCall(_feederInstance, ref feedData);
-                    }
-                    catch
-                    {
-                        readResult = 0;
-                    }
-
-                    if((readResult == 0) || (feedData.Result != 0) || (feedData.ResultString != ""))
-                    {
-                        _statistics.Lock();
-                        ++_statistics.ReceivedErrors;
-                        _statistics.Unlock();
-
-                        ++_failedConnectAttempts;
-
-                        if(_failedConnectAttempts > _settings.ReadErrorsLimit)
-                        {
-                            StatusEvent?.Invoke
-                                (this,
-                                 new StatusMessageEventArgs
-                                     ($"[{_settings.Name}]: too many reading errors - auto reconnect has been scheduled.",
-                                      null,
-                                      null));
-                            try
-                            {
-                                _closeCall(_feederInstance);
-                                ReleaseInstance();
-                            }
-                            catch
-                            {
-                            }
-                            finally
-                            {
-                                _failedConnectAttempts = 0;
-                                _isConnected = false;
-                            }
-                        }
-                    }
-                    else if((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
-                    {
-                        _statistics.Lock();
-                        _statistics.LastQuoteTime = DateTime.Now;
-                        _statistics.QuotesReceivedTotal += feedData.TicksCount;
-                        _statistics.Unlock();
-
-                        _failedConnectAttempts = 0;
-
-                        if((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
-                            ProcessingQuotes(ref feedData);
-                    }
-                }
-            }
-            finally
-            {
-                //lock(_stateLock)
-                //{
-                //    //_running = false;
-                //    //Monitor.PulseAll(_stateLock);
-                //}
-            }
-        }
-
-        private void ProcessingQuotes(ref FeedData context)
-        {
-            var ptrTicks = IntPtr.Zero;
-            try
-            {
-                ptrTicks = Marshal.AllocHGlobal(context.Ticks.Length);
-                Marshal.Copy(context.Ticks, 0, ptrTicks, LengthOfRawQuote * context.TicksCount);
-                for(var i = 0; i < context.TicksCount; ++i)
-                {
-                    var feedTick = Marshal.PtrToStructure<FeedTick>
-                        (new IntPtr(i*LengthOfRawQuote + ptrTicks.ToInt32()));
-                    lock(_activeSymbols)
-                    {
-                        if((_activeSymbols == null) || !_activeSymbols.Any() ||
-                            _activeSymbols.Contains(feedTick.Symbol))
-                        {
-                            _statistics.Lock();
-                            ++_statistics.QuotesReceived;
-                            _statistics.Unlock();
-                            var quote = new Quote
-                                (_settings.Name, feedTick.Bank, feedTick.Symbol, feedTick.Bid, feedTick.Ask, 0);
-                            try
-                            {
-                                ReceivedQuoteEvent?.Invoke(this, new ReceiveQuoteEventArgs(quote));
-                            }
-                            catch
-                            {
-                            }
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                if(ptrTicks != IntPtr.Zero)
-                    Marshal.FreeHGlobal(ptrTicks);
-            }
-        }
-
-        //public void AdviseSymbol(string symbol, string[] fields)
-        //{
-        //    AdviseSymbol(symbol);
-        //}
 
         /// <summary>
         ///     Enable receiving quotes for specified symbol.
@@ -818,19 +613,19 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                                           ? ConfigurationResult.SuccessfulApplied
                                           : ConfigurationResult.NeedReactivation;
             if((settings.Description != _settings.Description) &&
-                (configurationResult == ConfigurationResult.NotChanged))
+               (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
             if((settings.ReadErrorsLimit != _settings.ReadErrorsLimit) &&
-                (configurationResult == ConfigurationResult.NotChanged))
+               (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
             if((settings.ReconnectErrorsLimit != _settings.ReconnectErrorsLimit) &&
-                (configurationResult == ConfigurationResult.NotChanged))
+               (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
             if((settings.ReconnectRetryTimeout != _settings.ReconnectRetryTimeout) &&
-                (configurationResult == ConfigurationResult.NotChanged))
+               (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
             if((settings.ReconnectTimeout != _settings.ReconnectTimeout) &&
-                (configurationResult == ConfigurationResult.NotChanged))
+               (configurationResult == ConfigurationResult.NotChanged))
                 configurationResult = ConfigurationResult.SuccessfulApplied;
             if(configurationResult != ConfigurationResult.NotChanged)
                 _settings = settings;
@@ -845,6 +640,220 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         {
             throw new Exception("The method or operation is not implemented.");
         }
+
+        #region private methods
+        private void InitInstance()
+        {
+            _feederInstance = _nativeCreateCall();
+            if(_feederInstance == IntPtr.Zero)
+                throw new Exception($"[{_settings.Name}]: DsCreate failed.");
+
+            //var feedVersion = _nativeVersionCall();
+
+            var dst = IntPtr.Zero;
+            RtlMoveMemory(ref dst, _feederInstance, IntPtr.Size);
+            var cfeedInterfaceVtbl = Marshal.PtrToStructure<CFeedInterfaceVtbl>(dst);
+            _connectCall = Marshal.GetDelegateForFunctionPointer<ConnectDelegate>(cfeedInterfaceVtbl.Connect);
+            _closeCall = Marshal.GetDelegateForFunctionPointer<CloseDelegate>(cfeedInterfaceVtbl.Close);
+            _setSymbolsCall = Marshal.GetDelegateForFunctionPointer<SetSymbolsDelegate>
+                (cfeedInterfaceVtbl.SetSymbols);
+            _readCall = Marshal.GetDelegateForFunctionPointer<ReadDelegate>(cfeedInterfaceVtbl.Read);
+        }
+
+        private void Disconnect()
+        {
+            try
+            {
+                if(!(_feederInstance != IntPtr.Zero) || (_closeCall == null))
+                    return;
+
+                _closeCall(_feederInstance);
+                //_nativeDestroyCall(_feederInstance);
+            }
+            catch
+            {
+            }
+            finally
+            {
+                //_feederInstance = IntPtr.Zero;
+            }
+        }
+
+        private bool Connect()
+        {
+            try
+            {
+                _statistics.Lock();
+                ++_statistics.TotalConnections;
+                _statistics.Unlock();
+
+                if(_feederInstance == IntPtr.Zero)
+                    InitInstance();
+
+                if(_connectCall
+                        (_feederInstance,
+                         _settings.Server,
+                         _settings.Login.ToString(),
+                         _settings.Password) == 0)
+                    throw new Exception("No connection to MT4");
+
+                _failedConnectAttempts = 0;
+                TimerTimeout = 1;
+                StatusEvent?.Invoke
+                    (this,
+                     new StatusMessageEventArgs
+                         ($"[{_settings.Name}]: connected to {_settings.Server}",
+                          null,
+                          null));
+
+                return true;
+            }
+            catch
+            {
+                _statistics.Lock();
+                ++_statistics.ErrorsConnections;
+                _statistics.Unlock();
+                StatusEvent?.Invoke
+                    (this,
+                     new StatusMessageEventArgs
+                         ($"[{_settings.Name}]: connection failed to {_settings.Server}",
+                          null,
+                          null));
+                ++_failedConnectAttempts;
+                if(_failedConnectAttempts >= _settings.ReconnectErrorsLimit)
+                {
+                    Disconnect();
+                    TimerTimeout = _settings.ReconnectTimeout * MillisecondsInSecond;
+                    _failedConnectAttempts = 0;
+                    return false;
+                }
+
+                TimerTimeout = _settings.ReconnectRetryTimeout * MillisecondsInSecond;
+            }
+
+            return false;
+        }
+
+        private void OnTick()
+        {
+            lock(_stateLock)
+            {
+                //if(_running)
+                //    Monitor.Wait(_stateLock);
+
+                //_running = true;
+
+                var hglobal = Marshal.AllocHGlobal(MaxBuffSize);
+
+                if(_isConnected == false)
+                    if((_isConnected = Connect()) == false)
+                        return;
+
+                var feedData = new FeedData
+                {
+                    Body = hglobal,
+                    BodyMaxlen = MaxBuffSize
+                };
+
+                int readResult;
+                try
+                {
+                    readResult = _readCall(_feederInstance, ref feedData);
+                }
+                catch
+                {
+                    readResult = 0;
+                }
+
+                if((readResult == 0) || (feedData.Result != 0) || (feedData.ResultString != ""))
+                {
+                    _statistics.Lock();
+                    ++_statistics.ReceivedErrors;
+                    _statistics.Unlock();
+
+                    ++_failedConnectAttempts;
+
+                    if(_failedConnectAttempts > _settings.ReadErrorsLimit)
+                    {
+                        StatusEvent?.Invoke
+                            (this,
+                             new StatusMessageEventArgs
+                                 ($"[{_settings.Name}]: too many reading errors - auto reconnect has been scheduled.",
+                                  null,
+                                  null));
+                        try
+                        {
+                            //_closeCall(_feederInstance);
+                            Disconnect();
+                        }
+                        catch
+                        {
+                        }
+                        finally
+                        {
+                            _failedConnectAttempts = 0;
+                            _isConnected = false;
+                        }
+                    }
+                }
+                else if((feedData.TicksCount > 0) && (feedData.TicksCount <= 32))
+                {
+                    _statistics.Lock();
+                    _statistics.LastQuoteTime = DateTime.Now;
+                    _statistics.QuotesReceivedTotal += feedData.TicksCount;
+                    _statistics.Unlock();
+
+                    _failedConnectAttempts = 0;
+
+                    if((ReceivedQuoteEvent != null) && (_status == RunningStatus.Running))
+                        ProceedQuotes(ref feedData);
+                }
+            }
+        }
+
+        private void ProceedQuotes(ref FeedData context)
+        {
+            var ptrTicks = IntPtr.Zero;
+            try
+            {
+                ptrTicks = Marshal.AllocHGlobal(context.Ticks.Length);
+                Marshal.Copy(context.Ticks, 0, ptrTicks, LengthOfRawQuote * context.TicksCount);
+                for(var i = 0; i < context.TicksCount; ++i)
+                {
+                    var feedTick = Marshal.PtrToStructure<FeedTick>
+                        (new IntPtr(i*LengthOfRawQuote + ptrTicks.ToInt32()));
+                    lock(_activeSymbols)
+                    {
+                        if((_activeSymbols == null) || !_activeSymbols.Any() ||
+                           _activeSymbols.Contains(feedTick.Symbol))
+                        {
+                            _statistics.Lock();
+                            ++_statistics.QuotesReceived;
+                            _statistics.Unlock();
+                            var quote = new Quote
+                                (_settings.Name, feedTick.Bank, feedTick.Symbol, feedTick.Bid, feedTick.Ask, 0);
+                            try
+                            {
+                                ReceivedQuoteEvent?.Invoke(this, new ReceiveQuoteEventArgs(quote));
+                            }
+                            catch
+                            {
+                            }
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                if(ptrTicks != IntPtr.Zero)
+                    Marshal.FreeHGlobal(ptrTicks);
+            }
+        }
+
+        //public void AdviseSymbol(string symbol, string[] fields)
+        //{
+        //    AdviseSymbol(symbol);
+        //}
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr LoadLibrary(string path);
@@ -916,50 +925,30 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         [DllImport("WS2_32.DLL")]
         private static extern int WSACleanup();
 
-
-        //
-
-
         [DllImport("kernel32.dll")]
         private static extern void RtlMoveMemory(ref IntPtr dst, IntPtr src, int size);
-
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr module, string procName);
 
+        #endregion
+    }
 
-        //
-        //private void StartHelper()
-        //{
-        //    lock(_stateLock)
-        //    {
-        //        _timer = new Timer(OnTick, null, Timeout.Infinite, 1);
-        //        //_helperThread = new Thread(HelperCallback /*, 65536*/);
-        //        //_helperThread.IsBackground = true;
-        //        //_helperThread.Name = "[feeder]: " + _settings.Name;
-        //        //_initCompletionEvent.Reset();
-        //        //_helperThread.Start();
-        //        //_initCompletionEvent.WaitOne();
-        //    }
-        //}
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
+    internal struct WsaData
+    {
+        public readonly ushort wVersion;
+        public readonly ushort wHighVersion;
 
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256 + 1)]
+        public readonly string szDescription;
 
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi)]
-        private struct WsaData
-        {
-            private readonly ushort wVersion;
-            private readonly ushort wHighVersion;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128 + 1)]
+        public readonly string szSystemStatus;
 
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256 + 1)]
-            public readonly string szDescription;
-
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128 + 1)]
-            public readonly string szSystemStatus;
-
-            private readonly ushort iMaxSockets;
-            private readonly ushort iMaxUdpDg;
-            private readonly IntPtr lpVendorInfo;
-            //char FAR* lpVendorInfo;
-        }
+        public readonly ushort iMaxSockets;
+        public readonly ushort iMaxUdpDg;
+        public readonly IntPtr lpVendorInfo;
+        //char FAR* lpVendorInfo;
     }
 }

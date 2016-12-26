@@ -18,7 +18,10 @@ namespace UnitTests
                 Path = @"F:\temp\mt4\mt4feeder.feed",
                 Server = "10.200.0.3:10443",
                 Login = 1002,
-                Password = "RtxD4bo"
+                Password = "RtxD4bo_",
+                ReconnectErrorsLimit = 1,
+                ReconnectTimeout = 1,
+                ReconnectRetryTimeout = 1
             };
 
             "Init".ToConsole();
@@ -49,7 +52,7 @@ namespace UnitTests
 
             // wait until N ticks came
             // but not too infinite time
-            while (quotesReceived < 5 && DateTime.Now - started < TimeSpan.FromSeconds(30))
+            while (quotesReceived < 5 && DateTime.Now - started < TimeSpan.FromSeconds(60))
             {
                 //"Sleep...".ToConsole();
                 Thread.Sleep(TimeSpan.FromSeconds(1));

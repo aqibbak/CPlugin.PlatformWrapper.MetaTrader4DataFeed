@@ -14,45 +14,35 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// <summary>
         /// 
         /// </summary>
-        public const int READ_ERRORS_LIMIT = 20;
+        private const int READ_ERRORS_LIMIT = 20;
 
         /// <summary>
         /// 
         /// </summary>
-        public const int RECONNECT_ERRORS_LIMIT = 5;
+        private const int RECONNECT_ERRORS_LIMIT = 5;
 
         /// <summary>
         /// 
         /// </summary>
-        public const int RECONNECT_TIMEOUT = 60;
+        private const int RECONNECT_TIMEOUT = 60;
 
         /// <summary>
         /// 
         /// </summary>
-        public const int RECONNECT_RETRY_TIMEOUT = 2;
+        private const int RECONNECT_RETRY_TIMEOUT = 2;
 
-        
-        
-        private string _description = "";
+        /// <summary>
+        /// default constructor
+        /// </summary>
+        public Settings()
+        {
+            ReadErrorsLimit = READ_ERRORS_LIMIT;
+            ReconnectRetryTimeout = RECONNECT_RETRY_TIMEOUT;
+            ReconnectTimeout = RECONNECT_TIMEOUT;
+            ReconnectErrorsLimit = RECONNECT_ERRORS_LIMIT;
+        }
 
-        
-        
-        private int _login;
 
-        
-        
-        private string _name = "";
-
-        
-        
-        private string _password = "";
-
-        
-        
-        private string _path = "";
-
-        
-        
         private int _readErrorsLimit = 20;
 
         
@@ -67,63 +57,40 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         
         private int _reconnectTimeout = 60;
 
-        
-        
-        private string _server = "";
 
         /// <summary>
         /// 
         /// </summary>
         [Category("Common")]
-        public string Name
-        {
-            get { return _name; }
-            set { _name = value; }
-        }
+        public string Name { get; set; } = "";
 
         /// <summary>
         /// 
         /// </summary>
         [Category("Common")]
         [Description("Feeder description")]
-        public string Description
-        {
-            get { return _description; }
-            set { _description = value; }
-        }
+        public string Description { get; set; } = "";
 
         /// <summary>
         /// 
         /// </summary>
         [Category("Connection")]
         [Description("Path to *.feed DLL")]
-        public string Path
-        {
-            get { return _path; }
-            set { _path = value; }
-        }
+        public string Path { get; set; } = "";
 
         /// <summary>
         /// 
         /// </summary>
         [Description("Server")]
         [Category("Connection")]
-        public string Server
-        {
-            get { return _server; }
-            set { _server = value; }
-        }
+        public string Server { get; set; } = "";
 
         /// <summary>
         /// 
         /// </summary>
         [Category("Connection")]
         [Description("Login for connection")]
-        public int Login
-        {
-            get { return _login; }
-            set { _login = value; }
-        }
+        public int Login { get; set; }
 
         /// <summary>
         /// 
@@ -133,11 +100,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 #endif
         [Category("Connection")]
         [Description("Password for connection")]
-        public string Password
-        {
-            get { return _password; }
-            set { _password = value; }
-        }
+        public string Password { get; set; } = "";
 
         /// <summary>
         /// 
@@ -220,10 +183,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public override string ToString()
         {
-            if (_name == "")
-                return base.ToString();
-
-            return _name;
+            return Name == "" ? base.ToString() : Name;
         }
     }
 }
