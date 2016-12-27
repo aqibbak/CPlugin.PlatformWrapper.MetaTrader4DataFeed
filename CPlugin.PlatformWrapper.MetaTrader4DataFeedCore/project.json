@@ -51,6 +51,14 @@
       }
     }
   },
+
+  "compile": [
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/Common/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/Delegates/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/QuoteSources/*.cs"
+  ],
+
   "buildOptions": {
     "nowarn": [ "CS0649" ]
   }

@@ -1,4 +1,4 @@
-# What is it?
+# What is this?
 
 This is a .NET wrapper over native MetaQuotes MetaTrader4  datafeed files like *mt4feeder.feed*.
 
