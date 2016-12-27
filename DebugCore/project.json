@@ -1,0 +1,25 @@
+﻿{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "emitEntryPoint": true
+  },
+
+  "dependencies": {
+    "System.ComponentModel.Primitives": "4.3.0"
+  },
+
+  "frameworks": {
+    "net451": {
+      "buildOptions": {
+        "platform": "anycpu32bitpreferred"
+      }
+    }
+  },
+
+  "compile": [
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/Common/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/Delegates/*.cs",
+    "../CPlugin.PlatformWrapper.MetaTrader4DataFeed/QuoteSources/*.cs"
+  ]
+}

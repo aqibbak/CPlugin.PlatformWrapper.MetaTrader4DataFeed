@@ -276,16 +276,21 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
         private readonly object _stateLock = new object();
 
-        private bool _running;
-
-
-        private IntPtr _hglobal;
-
         private int _failedConnectAttempts;
         private bool _isConnected;
 
         private const int MaxBuffSize = 65536;
         private const int MillisecondsInSecond = 1000;
+
+        /// <summary>
+        /// buffer for incoming ticks
+        /// </summary>
+        private IntPtr _ticksBuffer;
+
+        /// <summary>
+        /// buffer for conversion ticks from byte[] to struct[]
+        /// </summary>
+        private IntPtr _ptrTicks;
 
 
         private static readonly Type TypeOfRawQuote = typeof(FeedTick);
@@ -379,6 +384,9 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
         /// </summary>
         public Feeder()
         {
+            _ticksBuffer = Marshal.AllocHGlobal(MaxBuffSize);
+            _ptrTicks = Marshal.AllocHGlobal(MaxBuffSize);
+
             _timer = new Timer
                 (state =>
                 {
@@ -394,6 +402,13 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                  null,
                  Timeout.Infinite,
                  Timeout.Infinite);
+        }
+
+        ~Feeder()
+        {
+            if(_ticksBuffer != IntPtr.Zero)
+                Marshal.FreeHGlobal(_ticksBuffer);
+            _ticksBuffer = IntPtr.Zero;
         }
 
         /// <summary>
@@ -521,8 +536,6 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
                     try
                     {
                         Disconnect();
-                        if(_hglobal != IntPtr.Zero)
-                            Marshal.FreeHGlobal(_hglobal);
                         _completeShutdownEvent.Set();
 
                         _initShutdownEvent.Set();
@@ -743,7 +756,6 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
                 //_running = true;
 
-                var hglobal = Marshal.AllocHGlobal(MaxBuffSize);
 
                 if(_isConnected == false)
                     if((_isConnected = Connect()) == false)
@@ -751,7 +763,7 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
                 var feedData = new FeedData
                 {
-                    Body = hglobal,
+                    Body = _ticksBuffer,
                     BodyMaxlen = MaxBuffSize
                 };
 
@@ -808,41 +820,34 @@ namespace CPlugin.PlatformWrapper.MetaTrader4DataFeed
 
         private void ProceedQuotes(ref FeedData context)
         {
-            var ptrTicks = IntPtr.Zero;
-            try
+            Marshal.Copy(context.Ticks, 0, _ptrTicks, LengthOfRawQuote * context.TicksCount);
+
+            for(var i = 0; i < context.TicksCount; ++i)
             {
-                ptrTicks = Marshal.AllocHGlobal(context.Ticks.Length);
-                Marshal.Copy(context.Ticks, 0, ptrTicks, LengthOfRawQuote * context.TicksCount);
-                for(var i = 0; i < context.TicksCount; ++i)
+                var feedTick = Marshal.PtrToStructure<FeedTick>
+                        (new IntPtr(i*LengthOfRawQuote + _ptrTicks.ToInt32()));
+
+                lock(_activeSymbols)
                 {
-                    var feedTick = Marshal.PtrToStructure<FeedTick>
-                        (new IntPtr(i*LengthOfRawQuote + ptrTicks.ToInt32()));
-                    lock(_activeSymbols)
+                    if((_activeSymbols == null) || !_activeSymbols.Any() ||
+                       _activeSymbols.Contains(feedTick.Symbol))
                     {
-                        if((_activeSymbols == null) || !_activeSymbols.Any() ||
-                           _activeSymbols.Contains(feedTick.Symbol))
-                        {
-                            _statistics.Lock();
-                            ++_statistics.QuotesReceived;
-                            _statistics.Unlock();
-                            var quote = new Quote
+                        _statistics.Lock();
+                        ++_statistics.QuotesReceived;
+                        _statistics.Unlock();
+                        var quote = new Quote
                                 (_settings.Name, feedTick.Bank, feedTick.Symbol, feedTick.Bid, feedTick.Ask, 0);
-                            try
-                            {
-                                ReceivedQuoteEvent?.Invoke(this, new ReceiveQuoteEventArgs(quote));
-                            }
-                            catch
-                            {
-                            }
+                        try
+                        {
+                            ReceivedQuoteEvent?.Invoke(this, new ReceiveQuoteEventArgs(quote));
+                        }
+                        catch
+                        {
                         }
                     }
                 }
             }
-            finally
-            {
-                if(ptrTicks != IntPtr.Zero)
-                    Marshal.FreeHGlobal(ptrTicks);
-            }
+
         }
 
         //public void AdviseSymbol(string symbol, string[] fields)

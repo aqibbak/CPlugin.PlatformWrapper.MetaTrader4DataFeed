@@ -1,30 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using CPlugin.PlatformWrapper.MetaTrader4DataFeed;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests
+namespace DebugCore
 {
-    [TestClass]
-    public class FeederTest
+    public class Program
     {
-        private readonly Feeder _feed = new Feeder()
+        public static void Main(string[] cmdLineArgs)
         {
-            Name = "test feed",
-            Path = @"F:\temp\mt4\mt4feeder.feed",
-            Server = "10.200.0.3:10443",
-            Login = 1002,
-            Password = "RtxD4bo_",
-            ReconnectErrorsLimit = 1,
-            ReconnectTimeout = 1,
-            ReconnectRetryTimeout = 1,
-            ReadErrorsLimit = 1
-        };
+            Feeder _feed = new Feeder()
+            {
+                Name = "FxPro Demo5",
+                Path = @"F:\temp\mt4\mt4feeder.feed",
+                Server = "demo5-london.fxpro.com:443",
+                Login = 8035138,
+                Password = "b7Bx9Vd5",
+                ReconnectErrorsLimit = 1,
+                ReconnectTimeout = 1,
+                ReconnectRetryTimeout = 1,
+                ReadErrorsLimit = 1
+            };
 
-        [TestMethod]
-        public void GetQuotesDuringNextFewSeconds()
-        {
             "Init".ToConsole();
 
             // enable if you need only one symbol
@@ -39,7 +39,7 @@ namespace UnitTests
                 ++quotesReceived;
 
                 // receive first N quotes then leave
-                if (quotesReceived < 5)
+                if (quotesReceived < 10000)
                     return;
 
                 "Stop".ToConsole();
@@ -53,7 +53,7 @@ namespace UnitTests
 
             // wait until N ticks came
             // but not too infinite time
-            while (quotesReceived < 5 && DateTime.Now - started < TimeSpan.FromSeconds(60))
+            while (quotesReceived < 10000 && DateTime.Now - started < TimeSpan.FromMinutes(3))
             {
                 //"Sleep...".ToConsole();
                 Thread.Sleep(TimeSpan.FromSeconds(1));
